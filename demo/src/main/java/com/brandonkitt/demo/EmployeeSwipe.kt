@@ -11,11 +11,27 @@ class EmployeeSwipe(
     var name: String,
     var color: Int,
     private val actionListener: ActionListener?
-
 ) : SwipeItem() {
+
     override fun getLeftLayout(): Int? = R.layout.item_employee_left
     override fun getRightLayout(): Int? = R.layout.item_employee_right
     override fun getCentreLayout(): Int = R.layout.item_employee
+
+    override fun bindCentre(
+        viewHolder: ViewHolder,
+        centreView: View,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        when {
+            payloads.contains("Color") -> {
+                centreView.setBackgroundColor(ContextCompat.getColor(centreView.context, color))
+            }
+            payloads.contains("Name") -> {
+                centreView.name_textView.text = name
+            }
+        }
+    }
 
     override fun bindLeft(viewHolder: ViewHolder, leftView: View?, position: Int) {
         leftView?.rename_textView?.setOnClickListener { actionListener?.onRenameClicked(this@EmployeeSwipe) }

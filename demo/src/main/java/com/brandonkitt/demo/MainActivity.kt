@@ -4,11 +4,9 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.xwray.groupie.GroupAdapter
-import com.xwray.groupie.Item
 import com.xwray.groupie.Section
 import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.activity_main.*
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -17,8 +15,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val section = Section()
-        var items = mutableListOf<Item<ViewHolder>>()
-        items = mutableListOf(
+        val items = mutableListOf(
             EmployeeNoSwipe(
                 name = "James",
                 color = android.R.color.holo_blue_light
@@ -28,20 +25,19 @@ class MainActivity : AppCompatActivity() {
                 color = android.R.color.holo_orange_light,
                 actionListener = object : EmployeeSwipe.ActionListener {
                     override fun onDeleteClicked(item: EmployeeSwipe) {
-                        items.remove(item)
-                        section.notifyChanged()
+                        section.remove(item)
                     }
 
                     override fun onRenameClicked(item: EmployeeSwipe) {
                         Helper.getTextInput(this@MainActivity, "Rename ${item.name}"){ newName ->
                             item.name = newName
-                            section.notifyChanged()
+                            item.notifyChanged("Name")
                         }
                     }
 
                     override fun onBackgroundClicked(item: EmployeeSwipe) {
                         item.color = Helper.getNextColor(item.color)
-                        section.notifyChanged()
+                        item.notifyChanged("Color")
                     }
                 }
             ),
