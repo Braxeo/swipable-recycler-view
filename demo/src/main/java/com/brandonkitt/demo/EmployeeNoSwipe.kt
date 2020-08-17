@@ -12,7 +12,7 @@ class EmployeeNoSwipe(
     override fun getLayout(): Int = R.layout.item_employee
     override fun bind(viewHolder: ViewHolder, position: Int) {
         with(viewHolder){
-            this.itemView.name_textView.text = name
+            this.itemView.titleTextView.text = name
             this.itemView.setBackgroundColor(ContextCompat.getColor(this.itemView.context, color))
         }
     }

@@ -3,7 +3,6 @@ package com.swiperecyclerview
 import android.annotation.SuppressLint
 import android.graphics.Canvas
 import android.view.MotionEvent
-import androidx.core.view.children
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_SWIPE
 import androidx.recyclerview.widget.RecyclerView
@@ -75,7 +74,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
             if (swipeBack) {
                 val width = this.recyclerView.widthFromCentreTranslation(viewHolder, dX)
                 when {
-                    (dX < width && dX < 0) -> buttonShowedState = OptionState.RIGHT_VISIBLE
+                    (-dX > width && dX < 0) -> buttonShowedState = OptionState.RIGHT_VISIBLE
                     (dX > width) -> buttonShowedState = OptionState.LEFT_VISIBLE
                 }
 
@@ -84,7 +83,6 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
                         recyclerView,
                         viewHolder
                     )
-                    setItemsClickable(recyclerView, false)
                 }
             }
 
@@ -97,7 +95,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
         viewHolder: RecyclerView.ViewHolder
     ) {
         recyclerView.setOnTouchListener { _, event ->
-            if (event.action == MotionEvent.ACTION_DOWN) {
+            if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_MOVE) {
                 setTouchUpListener(
                     recyclerView,
                     viewHolder
@@ -115,20 +113,10 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
             if (event.action == MotionEvent.ACTION_UP) {
                 this.recyclerView.updateForSwiping(viewHolder, 0f)
                 recyclerView.setOnTouchListener { _, _ -> false }
-                setItemsClickable(recyclerView, true)
                 swipeBack = false
                 buttonShowedState = OptionState.GONE
             }
             false
-        }
-    }
-
-    private fun setItemsClickable(
-        recyclerView: RecyclerView,
-        isClickable: Boolean
-    ) {
-        recyclerView.children.forEach { child ->
-            child.isClickable = isClickable
         }
     }
 

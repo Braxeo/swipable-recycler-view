@@ -1,6 +1,7 @@
 package com.brandonkitt.demo
 
 import android.view.View
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.swiperecyclerview.SwipeItem
@@ -15,11 +16,11 @@ class EmployeeSwipeInCardView(
 ): SwipeItem() {
 
     override fun getContainerLayout(): Int? = R.layout.item_employee_base
-    override fun getLeftLayout(): Int? = R.layout.item_employee_left
+    override fun getLeftLayout(): Int? = null // R.layout.item_employee_left
     override fun getRightLayout(): Int? = R.layout.item_employee_right
     override fun getCentreLayout(): Int = R.layout.item_employee
 
-    override fun getSwipeDirs(): Int = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+    override fun getSwipeDirs(): Int = ItemTouchHelper.RIGHT // ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
 
     override fun bindCentre(
         viewHolder: ViewHolder,
@@ -32,7 +33,7 @@ class EmployeeSwipeInCardView(
                 centreView.setBackgroundColor(ContextCompat.getColor(centreView.context, color))
             }
             payloads.contains("Name") -> {
-                centreView.name_textView.text = name
+                centreView.titleTextView.text = name
             }
         }
     }
@@ -47,8 +48,12 @@ class EmployeeSwipeInCardView(
     }
 
     override fun bindCentre(viewHolder: ViewHolder, centreView: View, position: Int) {
-        centreView.name_textView.text = name
+        centreView.titleTextView.text = name
         centreView.setBackgroundColor(ContextCompat.getColor(centreView.context, color))
+        centreView.setOnLongClickListener {
+            Toast.makeText(centreView.context, "On long clicked", Toast.LENGTH_LONG).show()
+            false
+        }
     }
 
     interface ActionListener {

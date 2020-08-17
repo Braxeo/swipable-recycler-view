@@ -18,14 +18,14 @@ abstract class SwipeItem: Item() {
     abstract fun getCentreLayout(): Int
     override fun getLayout(): Int = getContainerLayout() ?: R.layout.item_swipe_base
 
-    abstract fun bindLeft(viewHolder: ViewHolder, leftView: View?, position: Int)
-    abstract fun bindRight(viewHolder: ViewHolder, rightView: View?, position: Int)
-    abstract fun bindCentre(viewHolder: ViewHolder, centreView: View, position: Int)
+    abstract fun bindLeft(leftView: View?, position: Int)
+    abstract fun bindRight(rightView: View?, position: Int)
+    abstract fun bindCentre(centreView: View, position: Int)
 
     open fun getContainerLayout(): Int? = null
-    open fun bindLeft(viewHolder: ViewHolder, leftView: View?, position: Int, payloads: MutableList<Any>) { bindLeft(viewHolder, leftView, position) }
-    open fun bindRight(viewHolder: ViewHolder, rightView: View?, position: Int, payloads: MutableList<Any>) { bindRight(viewHolder, rightView, position) }
-    open fun bindCentre(viewHolder: ViewHolder, centreView: View, position: Int, payloads: MutableList<Any>) { bindCentre(viewHolder, centreView, position) }
+    open fun bindLeft(leftView: View?, position: Int, payloads: MutableList<Any>) { bindLeft(leftView, position) }
+    open fun bindRight(rightView: View?, position: Int, payloads: MutableList<Any>) { bindRight(rightView, position) }
+    open fun bindCentre(centreView: View, position: Int, payloads: MutableList<Any>) { bindCentre(centreView, position) }
 
     private var containerView: View? = null
     private var base: ViewGroup? = null
@@ -41,9 +41,9 @@ abstract class SwipeItem: Item() {
 
     override fun bind(viewHolder: ViewHolder, position: Int, payloads: MutableList<Any>) {
         if (payloads.isNotEmpty()){
-            bindLeft(viewHolder, leftView, position, payloads)
-            centreView?.let { bindCentre(viewHolder, it, position, payloads) }
-            bindRight(viewHolder, rightView, position, payloads)
+            bindLeft(leftView, position, payloads)
+            centreView?.let { bindCentre(it, position, payloads) }
+            bindRight(rightView, position, payloads)
         } else {
             bind(viewHolder, position)
         }
@@ -54,17 +54,22 @@ abstract class SwipeItem: Item() {
         val inflater = LayoutInflater.from(viewHolder.itemView.context)
 
         if (getContainerLayout() != null){
+            if (viewHolder.itemView !is ViewGroup){
+                throw SwipeException("getContainerLayout() must return a ViewGroup (CardView, LinearLayout, GridLayout)")
+            }
             containerView = viewHolder.itemView
         }
 
-        base = if (getContainerLayout() == null){
-            viewHolder.itemView as ViewGroup
-        } else {
-            inflater.inflate(
-                R.layout.item_swipe_base,
-                viewHolder.itemView as ViewGroup,
-                false
-            ) as ViewGroup
+        if (base == null){
+            base = if (getContainerLayout() == null){
+                viewHolder.itemView as ViewGroup
+            } else {
+                inflater.inflate(
+                    R.layout.item_swipe_base,
+                    viewHolder.itemView as ViewGroup,
+                    false
+                ) as ViewGroup
+            }
         }
 
         if (centreView == null){
@@ -82,7 +87,7 @@ abstract class SwipeItem: Item() {
                     false
                 ) }
         }
-        if (rightView == null && getLeftLayout() != null){
+        if (rightView == null && getRightLayout() != null){
             rightView = getRightLayout()?.let { layout ->
                 inflater.inflate(layout, base, false) }
         }
@@ -91,21 +96,21 @@ abstract class SwipeItem: Item() {
         (containerView as? ViewGroup)?.addView(base)
 
         (centreView?.parent as? LinearLayout)?.removeView(centreView)
-        (base?.centre_base as LinearLayout).addView(centreView)
+        base?.centre_base?.addView(centreView)
 
         (leftView?.parent as? LinearLayout)?.removeView(leftView)
-        leftView?.let { view -> (base?.left_base as LinearLayout).addView(view) }
+        leftView?.let { view -> base?.left_base?.addView(view) }
 
         (rightView?.parent as? LinearLayout)?.removeView(rightView)
-        rightView?.let { view -> (base?.right_base as LinearLayout).addView(view) }
+        rightView?.let { view -> base?.right_base?.addView(view) }
 
         leftBase = base?.left_base
         centreBase = base?.centre_base
         rightBase = base?.right_base
 
-        bindLeft(viewHolder, leftView, position)
-        bindCentre(viewHolder, requireNotNull(centreView), position)
-        bindRight(viewHolder, rightView, position)
+        bindLeft(leftView, position)
+        bindCentre(requireNotNull(centreView), position)
+        bindRight(rightView, position)
     }
 
     internal fun updateForSwiping(x: Float) {

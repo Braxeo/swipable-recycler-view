@@ -31,7 +31,7 @@ class EmployeeSwipe(
                 centreView.setBackgroundColor(ContextCompat.getColor(centreView.context, color))
             }
             payloads.contains("Name") -> {
-                centreView.name_textView.text = name
+                centreView.titleTextView.text = name
             }
         }
     }
@@ -46,7 +46,7 @@ class EmployeeSwipe(
     }
 
     override fun bindCentre(viewHolder: ViewHolder, centreView: View, position: Int) {
-        centreView.name_textView.text = name
+        centreView.titleTextView.text = name
         centreView.setBackgroundColor(ContextCompat.getColor(centreView.context, color))
     }
 
