@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import androidx.core.view.contains
+import androidx.recyclerview.widget.ItemTouchHelper
 import com.xwray.groupie.kotlinandroidextensions.Item
 import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.item_swipe_base.view.*
@@ -16,15 +16,19 @@ abstract class SwipeItem: Item() {
     abstract fun getLeftLayout(): Int?
     abstract fun getRightLayout(): Int?
     abstract fun getCentreLayout(): Int
-    override fun getLayout(): Int = R.layout.item_swipe_base
+    override fun getLayout(): Int = getContainerLayout() ?: R.layout.item_swipe_base
 
     abstract fun bindLeft(viewHolder: ViewHolder, leftView: View?, position: Int)
     abstract fun bindRight(viewHolder: ViewHolder, rightView: View?, position: Int)
     abstract fun bindCentre(viewHolder: ViewHolder, centreView: View, position: Int)
 
+    open fun getContainerLayout(): Int? = null
     open fun bindLeft(viewHolder: ViewHolder, leftView: View?, position: Int, payloads: MutableList<Any>) { bindLeft(viewHolder, leftView, position) }
     open fun bindRight(viewHolder: ViewHolder, rightView: View?, position: Int, payloads: MutableList<Any>) { bindRight(viewHolder, rightView, position) }
     open fun bindCentre(viewHolder: ViewHolder, centreView: View, position: Int, payloads: MutableList<Any>) { bindCentre(viewHolder, centreView, position) }
+
+    private var containerView: View? = null
+    private var base: ViewGroup? = null
 
     private var leftView: View? = null
     private var leftBase: View? = null
@@ -46,12 +50,27 @@ abstract class SwipeItem: Item() {
     }
 
     override fun bind(viewHolder: ViewHolder, position: Int) {
+
         val inflater = LayoutInflater.from(viewHolder.itemView.context)
+
+        if (getContainerLayout() != null){
+            containerView = viewHolder.itemView
+        }
+
+        base = if (getContainerLayout() == null){
+            viewHolder.itemView as ViewGroup
+        } else {
+            inflater.inflate(
+                R.layout.item_swipe_base,
+                viewHolder.itemView as ViewGroup,
+                false
+            ) as ViewGroup
+        }
 
         if (centreView == null){
             centreView = inflater.inflate(
                 getCentreLayout(),
-                viewHolder.itemView as ViewGroup,
+                base,
                 false
             )
         }
@@ -59,27 +78,30 @@ abstract class SwipeItem: Item() {
             leftView = getLeftLayout()?.let {  layout ->
                 inflater.inflate(
                     layout,
-                    viewHolder.itemView as ViewGroup,
+                    base,
                     false
                 ) }
         }
         if (rightView == null && getLeftLayout() != null){
             rightView = getRightLayout()?.let { layout ->
-                inflater.inflate(layout, viewHolder.itemView as ViewGroup, false) }
+                inflater.inflate(layout, base, false) }
         }
 
+        (base?.parent as? ViewGroup)?.removeView(base)
+        (containerView as? ViewGroup)?.addView(base)
+
         (centreView?.parent as? LinearLayout)?.removeView(centreView)
-        (viewHolder.itemView.centre_base as LinearLayout).addView(centreView)
+        (base?.centre_base as LinearLayout).addView(centreView)
 
         (leftView?.parent as? LinearLayout)?.removeView(leftView)
-        leftView?.let { view -> (viewHolder.itemView.left_base as LinearLayout).addView(view) }
+        leftView?.let { view -> (base?.left_base as LinearLayout).addView(view) }
 
         (rightView?.parent as? LinearLayout)?.removeView(rightView)
-        rightView?.let { view -> (viewHolder.itemView.right_base as LinearLayout).addView(view) }
+        rightView?.let { view -> (base?.right_base as LinearLayout).addView(view) }
 
-        leftBase = viewHolder.itemView.left_base
-        centreBase = viewHolder.itemView.centre_base
-        rightBase = viewHolder.itemView.right_base
+        leftBase = base?.left_base
+        centreBase = base?.centre_base
+        rightBase = base?.right_base
 
         bindLeft(viewHolder, leftView, position)
         bindCentre(viewHolder, requireNotNull(centreView), position)
@@ -87,6 +109,11 @@ abstract class SwipeItem: Item() {
     }
 
     internal fun updateForSwiping(x: Float) {
+        when {
+            x > 0 -> if (swipeDirs and ItemTouchHelper.LEFT == 0) return
+            x < 0 -> if (swipeDirs and ItemTouchHelper.RIGHT == 0) return
+        }
+
         centreView?.let { view ->
             ObjectAnimator.ofFloat(view, "translationX", x).apply {
                 duration = 0
@@ -107,6 +134,8 @@ abstract class SwipeItem: Item() {
     }
 
     private fun adjustPositionForLeft(x: Float) {
+        if (swipeDirs and ItemTouchHelper.LEFT == 0) return
+
         leftBase?.let { view ->
             val translation = x.coerceAtMost(view.width.toFloat())
             ObjectAnimator.ofFloat(view, "translationX", translation).apply {
@@ -118,6 +147,8 @@ abstract class SwipeItem: Item() {
     }
 
     private fun adjustPositionForRight(x: Float) {
+        if (swipeDirs and ItemTouchHelper.RIGHT == 0) return
+
         rightBase?.let { view ->
             val translation = x.coerceAtLeast(-(view.width.toFloat()))
             ObjectAnimator.ofFloat(view, "translationX", translation).apply {

@@ -8,12 +8,13 @@ import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.item_employee.view.*
 import kotlinx.android.synthetic.main.item_employee_left.view.*
 
-class EmployeeSwipe(
+class EmployeeSwipeInCardView(
     var name: String,
     var color: Int,
     private val actionListener: ActionListener?
-) : SwipeItem() {
+): SwipeItem() {
 
+    override fun getContainerLayout(): Int? = R.layout.item_employee_base
     override fun getLeftLayout(): Int? = R.layout.item_employee_left
     override fun getRightLayout(): Int? = R.layout.item_employee_right
     override fun getCentreLayout(): Int = R.layout.item_employee
@@ -37,12 +38,12 @@ class EmployeeSwipe(
     }
 
     override fun bindLeft(viewHolder: ViewHolder, leftView: View?, position: Int) {
-        leftView?.rename_textView?.setOnClickListener { actionListener?.onRenameClicked(this@EmployeeSwipe) }
-        leftView?.background_textView?.setOnClickListener { actionListener?.onBackgroundClicked(this@EmployeeSwipe) }
+        leftView?.rename_textView?.setOnClickListener { actionListener?.onRenameClicked(this@EmployeeSwipeInCardView) }
+        leftView?.background_textView?.setOnClickListener { actionListener?.onBackgroundClicked(this@EmployeeSwipeInCardView) }
     }
 
     override fun bindRight(viewHolder: ViewHolder, rightView: View?, position: Int) {
-        rightView?.setOnClickListener { actionListener?.onDeleteClicked(this@EmployeeSwipe) }
+        rightView?.setOnClickListener { actionListener?.onDeleteClicked(this@EmployeeSwipeInCardView) }
     }
 
     override fun bindCentre(viewHolder: ViewHolder, centreView: View, position: Int) {
@@ -51,8 +52,8 @@ class EmployeeSwipe(
     }
 
     interface ActionListener {
-        fun onDeleteClicked(item: EmployeeSwipe)
-        fun onRenameClicked(item: EmployeeSwipe)
-        fun onBackgroundClicked(item: EmployeeSwipe)
+        fun onDeleteClicked(item: EmployeeSwipeInCardView)
+        fun onRenameClicked(item: EmployeeSwipeInCardView)
+        fun onBackgroundClicked(item: EmployeeSwipeInCardView)
     }
 }
