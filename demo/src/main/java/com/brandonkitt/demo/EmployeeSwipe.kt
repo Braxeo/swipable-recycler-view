@@ -4,7 +4,6 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.swiperecyclerview.SwipeItem
-import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.item_employee.view.*
 import kotlinx.android.synthetic.main.item_employee_left.view.*
 
@@ -21,7 +20,6 @@ class EmployeeSwipe(
     override fun getSwipeDirs(): Int = ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
 
     override fun bindCentre(
-        viewHolder: ViewHolder,
         centreView: View,
         position: Int,
         payloads: MutableList<Any>
@@ -36,16 +34,16 @@ class EmployeeSwipe(
         }
     }
 
-    override fun bindLeft(viewHolder: ViewHolder, leftView: View?, position: Int) {
+    override fun bindLeft(leftView: View?, position: Int) {
         leftView?.rename_textView?.setOnClickListener { actionListener?.onRenameClicked(this@EmployeeSwipe) }
         leftView?.background_textView?.setOnClickListener { actionListener?.onBackgroundClicked(this@EmployeeSwipe) }
     }
 
-    override fun bindRight(viewHolder: ViewHolder, rightView: View?, position: Int) {
+    override fun bindRight(rightView: View?, position: Int) {
         rightView?.setOnClickListener { actionListener?.onDeleteClicked(this@EmployeeSwipe) }
     }
 
-    override fun bindCentre(viewHolder: ViewHolder, centreView: View, position: Int) {
+    override fun bindCentre(centreView: View, position: Int) {
         centreView.titleTextView.text = name
         centreView.setBackgroundColor(ContextCompat.getColor(centreView.context, color))
     }

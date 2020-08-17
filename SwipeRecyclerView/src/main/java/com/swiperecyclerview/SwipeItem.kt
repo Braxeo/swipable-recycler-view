@@ -11,59 +11,235 @@ import com.xwray.groupie.kotlinandroidextensions.Item
 import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.item_swipe_base.view.*
 
+/** Created by Brandon Kitt (15/08/2020)  */
 abstract class SwipeItem: Item() {
 
-    abstract fun getLeftLayout(): Int?
-    abstract fun getRightLayout(): Int?
-    abstract fun getCentreLayout(): Int
-    override fun getLayout(): Int = getContainerLayout() ?: R.layout.item_swipe_base
+    /**
+     * Used to check if the centreView can
+     * overdraw over the size of the closest option
+     */
+    open fun canOverdraw(): Boolean = true
 
-    abstract fun bindLeft(leftView: View?, position: Int)
-    abstract fun bindRight(rightView: View?, position: Int)
-    abstract fun bindCentre(centreView: View, position: Int)
-
+    /**
+     * This is the view that will surround the centre, left and right view's
+     *
+     * @throws SwipeException If view is not ViewGroup
+     * @see containerView
+     * @return The id for the containerView
+     */
     open fun getContainerLayout(): Int? = null
+
+    /**
+     * This is the view that will appear on the left side of the centreView
+     * This will only be shown if Left is specified in getSwipeDirs()
+     *
+     * @see getSwipeDirs
+     * @see ItemTouchHelper.LEFT
+     *
+     * @return The id for the leftLayout
+     */
+    abstract fun getLeftLayout(): Int?
+
+    /**
+     * This is the view that will appear on the right side of the centreView
+     * This will only be shown if right is specified in getSwipeDirs()
+     *
+     * @see getSwipeDirs
+     * @see ItemTouchHelper.RIGHT
+     *
+     * @return The id for the rightLayout
+     */
+    abstract fun getRightLayout(): Int?
+
+    /**
+     * This is the view that will appear on the centre of the baseView
+     * This will always be shown
+     *
+     * @return The id for the centreLayout
+     */
+    abstract fun getCentreLayout(): Int
+
+    /**
+     * Used to update a payload from leftLayout
+     * This is only called when a payload is used in notifyChanged(payload: MutableList<Any>)
+     */
     open fun bindLeft(leftView: View?, position: Int, payloads: MutableList<Any>) { bindLeft(leftView, position) }
+
+    /**
+     * Used to update a payload from rightLayout
+     * This is only called when a payload is used in notifyChanged(payload: MutableList<Any>)
+     */
     open fun bindRight(rightView: View?, position: Int, payloads: MutableList<Any>) { bindRight(rightView, position) }
+
+    /**
+     * Used to update a payload from centreLayout
+     * This is only called when a payload is used in notifyChanged(payload: MutableList<Any>)
+     */
     open fun bindCentre(centreView: View, position: Int, payloads: MutableList<Any>) { bindCentre(centreView, position) }
 
+    /**
+     * Used to update the all the views on the leftLayout
+     * This is when no payload is specified in notifyChanged() or no implementation is created for the payload methods
+     *
+     * @see leftView
+     * @see bindLeft
+     */
+    abstract fun bindLeft(leftView: View?, position: Int)
+
+    /**
+     * Used to update the all the views on the rightLayout
+     * This is when no payload is specified in notifyChanged() or no implementation is created for the payload methods
+     *
+     * @see rightView
+     * @see bindRight
+     */
+    abstract fun bindRight(rightView: View?, position: Int)
+
+    /**
+     * Used to update the all the views on the centreLayout
+     * This is when no payload is specified in notifyChanged() or no implementation is created for the payload methods
+     *
+     * @see centreView
+     * @see bindCentre
+     */
+    abstract fun bindCentre(centreView: View, position: Int)
+
+    /**
+     * Gets the base layout for this viewHolder
+     * This can either be the specified containerLayout or the default SwipeItem.item_swipe_base
+     *
+     * This method should not be overridden
+     *
+     * @see getContainerLayout
+     */
+    override fun getLayout(): Int = getContainerLayout() ?: R.layout.item_swipe_base
+
+    /**
+     * Used to surround the baseView, centreView, leftView and rightView
+     * This is used if the user wants to wrap the viewHolder in something like a cardView with
+     * rounded corners or add padding
+     *
+     * @see getContainerLayout
+     */
     private var containerView: View? = null
+
+    /**
+     * Used on the left side of the centreView
+     * This will wrap to be the same size as the centreView
+     *
+     * To enable the use of this view, you will need to add ItemTouchListener.LEFT to getSwipeDirs()
+     * Overdraw can be disabled with the use of canOverdraw()
+     *
+     * @see canOverdraw
+     * @see ItemTouchHelper.LEFT
+     * @see getSwipeDirs
+     * @see centreView
+     */
+    private var leftView: View? = null
+
+    /**
+     * Used on the right side of the centreView
+     * This will wrap to be the same size as the centreView
+     *
+     * To enable the use of this view, you will need to add ItemTouchListener.RIGHT to getSwipeDirs()
+     * Overdraw can be disabled with the use of canOverdraw()
+     *
+     * @see canOverdraw
+     * @see ItemTouchHelper.RIGHT
+     * @see getSwipeDirs
+     * @see centreView
+     */
+    private var rightView: View? = null
+
+    /**
+     * Used as the centreView between leftView and rightView
+     * Both leftView and rightView will wrap to be the same height as this view
+     *
+     * @see leftView
+     * @see rightView
+     */
+    private var centreView: View? = null
+
+    /**
+     * The base view used to contain the left, centre and right views
+     * This gets wrapped inside the containerView if one is specified in getContainerLayout()
+     *
+     * @see getContainerLayout
+     * @see leftView
+     * @see centreView
+     * @see rightView
+     */
     private var base: ViewGroup? = null
 
-    private var leftView: View? = null
+    /**
+     * Used to hold and translate the leftView
+     * This view gets added to the baseView
+     *
+     * @see base
+     */
     private var leftBase: View? = null
 
-    private var rightView: View? = null
+    /**
+     * Used to hold and translate the rightView
+     * This view gets added to the baseView
+     *
+     * @see base
+     */
     private var rightBase: View? = null
 
-    private var centreView: View? = null
+    /**
+     * Used to hold and translate the centreView
+     * This view gets added to the baseView
+     *
+     * @see base
+     */
     private var centreBase: View? = null
 
+    /**
+     * Performs payload binding for all views if a payload
+     * is specified, otherwise defaults to standard binding for all views
+     */
     override fun bind(viewHolder: ViewHolder, position: Int, payloads: MutableList<Any>) {
         if (payloads.isNotEmpty()){
+            // Perform payload bind for all views
             bindLeft(leftView, position, payloads)
             centreView?.let { bindCentre(it, position, payloads) }
             bindRight(rightView, position, payloads)
         } else {
+            // Perform standard bind for all views
             bind(viewHolder, position)
         }
     }
 
+    /**
+     * Performs standard binding for all views
+     */
     override fun bind(viewHolder: ViewHolder, position: Int) {
 
         val inflater = LayoutInflater.from(viewHolder.itemView.context)
 
+        // Check if we have a containerView
         if (getContainerLayout() != null){
+
+            // Ensure that it is a ViewGroup
             if (viewHolder.itemView !is ViewGroup){
                 throw SwipeException("getContainerLayout() must return a ViewGroup (CardView, LinearLayout, GridLayout)")
             }
+
+            /** Set our viewHolder itemView to containerView
+             * @see getLayout
+             */
             containerView = viewHolder.itemView
         }
 
+        // Only inflate if null
         if (base == null){
+
             base = if (getContainerLayout() == null){
+                // ItemView if we don't have a containerView
                 viewHolder.itemView as ViewGroup
             } else {
+                // Inflate the base as the containerView is itemView
                 inflater.inflate(
                     R.layout.item_swipe_base,
                     viewHolder.itemView as ViewGroup,
@@ -72,98 +248,155 @@ abstract class SwipeItem: Item() {
             }
         }
 
+        // Only inflate if null, as we remove and add views later
         if (centreView == null){
-            centreView = inflater.inflate(
-                getCentreLayout(),
-                base,
-                false
-            )
+            centreView = inflater.inflate(getCentreLayout(), base, false)
         }
         if (leftView == null && getLeftLayout() != null){
-            leftView = getLeftLayout()?.let {  layout ->
-                inflater.inflate(
-                    layout,
-                    base,
-                    false
-                ) }
+            leftView = getLeftLayout()?.let {  layout -> inflater.inflate(layout, base, false) }
         }
         if (rightView == null && getRightLayout() != null){
-            rightView = getRightLayout()?.let { layout ->
-                inflater.inflate(layout, base, false) }
+            rightView = getRightLayout()?.let { layout -> inflater.inflate(layout, base, false) }
         }
 
+        // Remove old parents
         (base?.parent as? ViewGroup)?.removeView(base)
-        (containerView as? ViewGroup)?.addView(base)
-
         (centreView?.parent as? LinearLayout)?.removeView(centreView)
-        base?.centre_base?.addView(centreView)
-
         (leftView?.parent as? LinearLayout)?.removeView(leftView)
-        leftView?.let { view -> base?.left_base?.addView(view) }
-
         (rightView?.parent as? LinearLayout)?.removeView(rightView)
+
+        // Add new parents
+        (containerView as? ViewGroup)?.addView(base)
+        base?.centre_base?.addView(centreView)
+        leftView?.let { view -> base?.left_base?.addView(view) }
         rightView?.let { view -> base?.right_base?.addView(view) }
 
+        // Add references to bases for translation
         leftBase = base?.left_base
         centreBase = base?.centre_base
         rightBase = base?.right_base
 
+        // Call bind methods for all views
         bindLeft(leftView, position)
         bindCentre(requireNotNull(centreView), position)
         bindRight(rightView, position)
     }
 
-    internal fun updateForSwiping(x: Float) {
-        when {
-            x > 0 -> if (swipeDirs and ItemTouchHelper.LEFT == 0) return
-            x < 0 -> if (swipeDirs and ItemTouchHelper.RIGHT == 0) return
+    /**
+     * Updates the centre, left and right views based on the given translation
+     *
+     * If the swipeDirection is not specified in getSwipeDirs() or Overdraw will
+     * occur and is not allowed, this will leave early and no translation will
+     * be made
+     *
+     * @see getSwipeDirs
+     * @see canOverdraw
+     *
+     * @param translation The amount the centreView has been translated
+     * @param context Used to calculate the closest options width for
+     * validation
+     */
+    internal fun updateForTranslation(translation: Float, context: Context) {
+        if (invalidSwipeDirection(translation) ||
+            invalidSwipeOverdraw(translation, context))
+        {
+            // Leave early if we have an invalid translation
+            return
         }
 
+        // Animate the centreView by translation
         centreView?.let { view ->
-            ObjectAnimator.ofFloat(view, "translationX", x).apply {
+            ObjectAnimator.ofFloat(view, "translationX", translation).apply {
                 duration = 0
                 start()
             }
         }
 
+        // Animate the left, right or both views based on translation
         when {
-            x > 0 -> adjustPositionForLeft(x)
-            x < 0 -> adjustPositionForRight(x)
-            x == 0f -> removeOptions()
+            translation > 0 -> adjustPositionForLeftView(translation)
+            translation < 0 -> adjustPositionForRightView(translation)
+            translation == 0f -> moveOptionsOutOfView()
         }
     }
 
-    private fun removeOptions(){
-        adjustPositionForLeft(0f)
-        adjustPositionForRight(0f)
+    /**
+     * Checks if the given translation is invalid for the items overdraw setting
+     *
+     * @see canOverdraw
+     * @return True if the translation is invalid, otherwise false
+     */
+    private fun invalidSwipeOverdraw(translation: Float, context: Context): Boolean {
+        return when {
+            translation > 0 -> !canOverdraw() && translation > getLeftLength(context)
+            translation < 0 -> !canOverdraw() && -translation > getRightLength(context)
+            else -> false
+        }
     }
 
-    private fun adjustPositionForLeft(x: Float) {
-        if (swipeDirs and ItemTouchHelper.LEFT == 0) return
+    /**
+     * Checks if the given translation is invalid for the items swipe direction setting
+     *
+     * @see getSwipeDirs
+     * @return True if the translation is invalid, otherwise false
+     */
+    private fun invalidSwipeDirection(x: Float): Boolean {
+        return when {
+            x > 0 -> swipeDirs and ItemTouchHelper.LEFT == 0
+            x < 0 -> swipeDirs and ItemTouchHelper.RIGHT == 0
+            else -> false
+        }
+    }
 
+    /**
+     * Sets both leftView and rightView back to the default position (hidden)
+     */
+    private fun moveOptionsOutOfView(){
+        adjustPositionForLeftView(0f)
+        adjustPositionForRightView(0f)
+    }
+
+    /**
+     * Adjusts the position of the leftView based on the given translation
+     */
+    private fun adjustPositionForLeftView(translation: Float) {
         leftBase?.let { view ->
-            val translation = x.coerceAtMost(view.width.toFloat())
-            ObjectAnimator.ofFloat(view, "translationX", translation).apply {
-                duration = 0
-                start()
+            // Only move the leftView as far as its own width
+            translation.coerceAtMost(view.width.toFloat()).let { calculatedMaximumTranslation ->
+                ObjectAnimator.ofFloat(
+                    view,
+                    "translationX",
+                    calculatedMaximumTranslation
+                ).apply {
+                    duration = 0
+                    start()
+                }
             }
         }
-
     }
 
-    private fun adjustPositionForRight(x: Float) {
-        if (swipeDirs and ItemTouchHelper.RIGHT == 0) return
-
+    /**
+     * Adjusts the position of the rightView based on the given translation
+     */
+    private fun adjustPositionForRightView(translation: Float) {
         rightBase?.let { view ->
-            val translation = x.coerceAtLeast(-(view.width.toFloat()))
-            ObjectAnimator.ofFloat(view, "translationX", translation).apply {
-                duration = 0
-                start()
+            // Only move the rightView as far as its own width
+            translation.coerceAtLeast(-(view.width.toFloat())).let { calculatedMinimumTranslation ->
+                ObjectAnimator.ofFloat(
+                    view,
+                    "translationX",
+                    calculatedMinimumTranslation
+                ).apply {
+                    duration = 0
+                    start()
+                }
             }
         }
-
     }
 
+    /**
+     * Gets the calculated length of the leftView
+     */
     internal fun getLeftLength(context: Context): Int {
         return leftBase?.width ?:
                getLeftLayout()?.let {
@@ -172,6 +405,9 @@ abstract class SwipeItem: Item() {
                0
     }
 
+    /**
+     * Gets the calculated length of the rightView
+     */
     internal fun getRightLength(context: Context): Int {
         return rightBase?.width ?:
                getRightLayout()?.let {
