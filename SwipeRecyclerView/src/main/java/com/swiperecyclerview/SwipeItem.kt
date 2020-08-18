@@ -367,7 +367,7 @@ abstract class SwipeItem: Item() {
                         // This view is showing the rightView
                         cachedTranslation < 0 -> {
                             // Update to new rightView length
-                            cachedTranslation = getRightLength(context).toFloat()
+                            cachedTranslation = -getRightLength(context).toFloat()
                             true
                         }
 
