@@ -31,9 +31,7 @@ class SwipeRecyclerView : RecyclerView {
      * Updates the translation animations on the centre, left and right views
      * for the viewHolder
      */
-    internal fun updateForTranslation(viewHolder: ViewHolder, x: Float) {
-        val position = viewHolder.adapterPosition
-
+    internal fun updateForTranslation(context: Context, position: Int, x: Float) {
         // Make sure that the adapter isn't in a weird state
         if (position != -1){
 
@@ -43,10 +41,7 @@ class SwipeRecyclerView : RecyclerView {
             // Check that we're using a SwipeItem
             val swipeItem = adapter?.getItem(position) as? SwipeItem
 
-            swipeItem?.let { item ->
-                val context = viewHolder.itemView.context
-                item.updateForTranslation(x, context)
-            }
+            swipeItem?.updateForTranslation(x, context)
         }
     }
 
@@ -85,18 +80,20 @@ class SwipeRecyclerView : RecyclerView {
      *
      * @return The length of the Left or Right view
      */
-    internal fun widthFromCentreTranslation(viewHolder: ViewHolder, translation: Float): Int {
+    internal fun widthFromCentreTranslation(position: Int, translation: Float): Int {
 
         // Get Groupie Adapter
         val adapter = adapter as? GroupAdapter
 
         // Get SwipeItem
-        val swipeItem = adapter?.getItem(viewHolder.adapterPosition) as? SwipeItem
+        return if (position != -1){
+            val swipeItem = adapter?.getItem(position) as? SwipeItem
 
-        // Gets the Length of the closest option based on translation
-        return swipeItem?.let { item ->
-            if (translation > 0) item.getLeftLength(context)
-            else item.getRightLength(context)
-        } ?: 0
+            // Gets the Length of the closest option based on translation
+            swipeItem?.let { item ->
+                if (translation > 0) item.getLeftLength(context)
+                else item.getRightLength(context)
+            } ?: 0
+        } else 0
     }
 }

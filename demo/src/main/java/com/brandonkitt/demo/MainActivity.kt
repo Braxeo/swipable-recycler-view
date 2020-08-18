@@ -152,19 +152,25 @@ class MainActivity : AppCompatActivity() {
 
     private val cardActionListener = object : EmployeeSwipeInCardView.ActionListener {
         override fun onDeleteClicked(item: EmployeeSwipeInCardView) {
-            cardSection.remove(item)
+            item.showDelete = false
+            item.notifyChanged()
+            //cardSection.remove(item)
         }
 
         override fun onRenameClicked(item: EmployeeSwipeInCardView) {
-            Helper.getTextInput(this@MainActivity, "Rename ${item.name}"){ newName ->
-                item.name = newName
-                item.notifyChanged("Name")
-            }
+            item.showRename = false
+            item.notifyChanged()
+            //Helper.getTextInput(this@MainActivity, "Rename ${item.name}"){ newName ->
+            //    item.name = newName
+            //    item.notifyChanged("Name")
+            //}
         }
 
         override fun onBackgroundClicked(item: EmployeeSwipeInCardView) {
-            item.color = Helper.getNextColor(item.color)
-            item.notifyChanged("Color")
+            item.showRecolor = false
+            item.notifyChanged()
+            //item.color = Helper.getNextColor(item.color)
+            //item.notifyChanged("Color")
         }
     }
 }

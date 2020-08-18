@@ -5,6 +5,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.xwray.groupie.kotlinandroidextensions.Item
@@ -115,6 +116,14 @@ abstract class SwipeItem: Item() {
     override fun getLayout(): Int = getContainerLayout() ?: R.layout.item_swipe_base
 
     /**
+     * Used to dynamically adjust the translation of the left and right options based on
+     * and changes made during the bind methods
+     *
+     * @see invalidateOptionLengths
+     */
+    private var cachedTranslation: Float = 0f
+
+    /**
      * Used to surround the baseView, centreView, leftView and rightView
      * This is used if the user wants to wrap the viewHolder in something like a cardView with
      * rounded corners or add padding
@@ -196,6 +205,18 @@ abstract class SwipeItem: Item() {
     private var centreBase: View? = null
 
     /**
+     *  Used to attach a layout listener to the left and right
+     *  views
+     *
+     *  This is done so if the user hides or shows any views the
+     *  translations adjust accordingly
+     */
+    private fun attachLayoutListeners(context: Context){
+        attachGlobalLayoutListenerForPostUpdating(rightBase, context)
+        attachGlobalLayoutListenerForPostUpdating(leftBase, context)
+    }
+
+    /**
      * Performs payload binding for all views if a payload
      * is specified, otherwise defaults to standard binding for all views
      */
@@ -205,6 +226,7 @@ abstract class SwipeItem: Item() {
             bindLeft(leftView, position, payloads)
             centreView?.let { bindCentre(it, position, payloads) }
             bindRight(rightView, position, payloads)
+            attachLayoutListeners(viewHolder.itemView.context)
         } else {
             // Perform standard bind for all views
             bind(viewHolder, position)
@@ -280,6 +302,60 @@ abstract class SwipeItem: Item() {
         bindLeft(leftView, position)
         bindCentre(requireNotNull(centreView), position)
         bindRight(rightView, position)
+
+        attachLayoutListeners(viewHolder.itemView.context)
+    }
+
+    /**
+     * Attaches a layout listener to the given view
+     *
+     * This gets added to all the viewHolders, so we want to
+     * ensure that we don't call invalidateOptionLengths() when not required
+     *
+     * Example - When the user hides a button on a leftView, this will get called
+     * for all viewHolders currently visible, we would only want the one that
+     * has been modified to update
+     */
+    private fun attachGlobalLayoutListenerForPostUpdating(view: View?, context: Context){
+        view?.viewTreeObserver
+            ?.takeIf { it.isAlive }
+            ?.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+
+                    // Only mark as modified if we're translated
+                    val modified = when {
+
+                        // This view is showing the leftView
+                        cachedTranslation > 0 -> {
+                            // Update to new leftView length
+                            cachedTranslation = getLeftLength(context).toFloat()
+                            true
+                        }
+
+                        // This view is showing the rightView
+                        cachedTranslation < 0 -> {
+                            // Update to new rightView length
+                            cachedTranslation = getRightLength(context).toFloat()
+                            true
+                        }
+
+                        // We aren't translated, no need to update
+                        else -> false
+                    }
+
+                    if (modified){
+                        invalidateOptionLengths(context)
+                    }
+
+                    view.viewTreeObserver?.removeOnGlobalLayoutListener(this)
+                }
+            })
+    }
+
+
+
+    private fun invalidateOptionLengths(context: Context) {
+        updateForTranslation(cachedTranslation, context, 250)
     }
 
     /**
@@ -296,7 +372,11 @@ abstract class SwipeItem: Item() {
      * @param context Used to calculate the closest options width for
      * validation
      */
-    internal fun updateForTranslation(translation: Float, context: Context) {
+    internal fun updateForTranslation(translation: Float, context: Context, translationDuration: Long = 0) {
+
+        // Store translation so we can dynamically translate based on left/right view bind() changes
+        cachedTranslation = translation
+
         if (invalidSwipeDirection(translation) ||
             invalidSwipeOverdraw(translation, context))
         {
@@ -307,7 +387,7 @@ abstract class SwipeItem: Item() {
         // Animate the centreView by translation
         centreView?.let { view ->
             ObjectAnimator.ofFloat(view, "translationX", translation).apply {
-                duration = 0
+                duration = translationDuration
                 start()
             }
         }
@@ -326,7 +406,10 @@ abstract class SwipeItem: Item() {
      * @see canOverdraw
      * @return True if the translation is invalid, otherwise false
      */
-    private fun invalidSwipeOverdraw(translation: Float, context: Context): Boolean {
+    private fun invalidSwipeOverdraw(
+        translation: Float,
+        context: Context
+    ): Boolean {
         return when {
             translation > 0 -> !canOverdraw() && translation > getLeftLength(context)
             translation < 0 -> !canOverdraw() && -translation > getRightLength(context)
@@ -351,7 +434,7 @@ abstract class SwipeItem: Item() {
     /**
      * Sets both leftView and rightView back to the default position (hidden)
      */
-    private fun moveOptionsOutOfView(){
+    private fun moveOptionsOutOfView() {
         adjustPositionForLeftView(0f)
         adjustPositionForRightView(0f)
     }
@@ -359,7 +442,7 @@ abstract class SwipeItem: Item() {
     /**
      * Adjusts the position of the leftView based on the given translation
      */
-    private fun adjustPositionForLeftView(translation: Float) {
+    private fun adjustPositionForLeftView(translation: Float, translationDuration: Long = 0) {
         leftBase?.let { view ->
             // Only move the leftView as far as its own width
             translation.coerceAtMost(view.width.toFloat()).let { calculatedMaximumTranslation ->
@@ -368,7 +451,7 @@ abstract class SwipeItem: Item() {
                     "translationX",
                     calculatedMaximumTranslation
                 ).apply {
-                    duration = 0
+                    duration = translationDuration
                     start()
                 }
             }
@@ -378,7 +461,7 @@ abstract class SwipeItem: Item() {
     /**
      * Adjusts the position of the rightView based on the given translation
      */
-    private fun adjustPositionForRightView(translation: Float) {
+    private fun adjustPositionForRightView(translation: Float, translationDuration: Long = 0) {
         rightBase?.let { view ->
             // Only move the rightView as far as its own width
             translation.coerceAtLeast(-(view.width.toFloat())).let { calculatedMinimumTranslation ->
@@ -387,7 +470,7 @@ abstract class SwipeItem: Item() {
                     "translationX",
                     calculatedMinimumTranslation
                 ).apply {
-                    duration = 0
+                    duration = translationDuration
                     start()
                 }
             }
@@ -400,9 +483,11 @@ abstract class SwipeItem: Item() {
     internal fun getLeftLength(context: Context): Int {
         return leftBase?.width ?:
                getLeftLayout()?.let {
-                   LayoutInflater.from(context).inflate(it, null, false).width
-               } ?:
-               0
+                   LayoutInflater
+                       .from(context)
+                       .inflate(it, null, false)
+                       .width
+               } ?: 0
     }
 
     /**
@@ -411,8 +496,10 @@ abstract class SwipeItem: Item() {
     internal fun getRightLength(context: Context): Int {
         return rightBase?.width ?:
                getRightLayout()?.let {
-                   LayoutInflater.from(context).inflate(it, null, false).width
-               } ?:
-               0
+                   LayoutInflater
+                       .from(context)
+                       .inflate(it, null, false)
+                       .width
+               } ?: 0
     }
 }

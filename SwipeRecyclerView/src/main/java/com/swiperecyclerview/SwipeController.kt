@@ -60,7 +60,12 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
         isCurrentlyActive: Boolean
     ) {
 
-        // Convert to a mutable variable
+        // Store the viewHolder position, we use this to reference
+        // the correct adapter item later, not viewHolder.adapterPosition as
+        // this gets outdated throughout the onTouchListeners
+        // resulting in -1
+        val position = viewHolder.adapterPosition
+        val context= viewHolder.itemView.context
         var x = dX
 
         if (actionState == ACTION_STATE_SWIPE) {
@@ -77,23 +82,23 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
                     else -> Unit
                 }
 
-                this.recyclerView.updateForTranslation(viewHolder, x)
+                this.recyclerView.updateForTranslation(context, position, x)
             }
             else {
-                setTouchListener(recyclerView, viewHolder, x)
+                setTouchListener(recyclerView, position, x)
             }
         }
 
         // Make sure that if we are not longer showing anything we still want to update
         // in-case we previously were showing an option
         if (buttonShowedState == GONE) {
-            this.recyclerView.updateForTranslation(viewHolder, x)
+            this.recyclerView.updateForTranslation(context, position, x)
         }
     }
 
     private fun setTouchListener(
         recyclerView: RecyclerView,
-        viewHolder: RecyclerView.ViewHolder,
+        position: Int,
         dX: Float
     ) {
         recyclerView.setOnTouchListener { _, motionEvent ->
@@ -105,7 +110,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
 
                 // Get width based on current translation,
                 // as we don't have an option to choose from yet
-                val width = this.recyclerView.widthFromCentreTranslation(viewHolder, dX)
+                val width = this.recyclerView.widthFromCentreTranslation(position, dX)
 
                 when {
                     (-dX > width && dX < 0) -> buttonShowedState = RIGHT_VISIBLE
@@ -114,7 +119,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
 
                 // Update if we're past a button threshold
                 if (buttonShowedState != GONE) {
-                    setTouchDownListener(recyclerView, viewHolder)
+                    setTouchDownListener(recyclerView, position)
                 }
             }
 
@@ -124,13 +129,13 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
 
     private fun setTouchDownListener(
         recyclerView: RecyclerView,
-        viewHolder: RecyclerView.ViewHolder
+        position: Int
     ) {
         recyclerView.setOnTouchListener { _, event ->
             // Update if action down and move
             // Updated to used ACTION_MOVE to be more reactive and friendly to user-interaction
             if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_MOVE) {
-                setTouchUpListener(recyclerView, viewHolder)
+                setTouchUpListener(recyclerView, position)
             }
             false
         }
@@ -138,7 +143,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
 
     private fun setTouchUpListener(
         recyclerView: RecyclerView,
-        viewHolder: RecyclerView.ViewHolder
+        position: Int
     ) {
         recyclerView.setOnTouchListener { _, event ->
 
@@ -146,7 +151,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
             if (event.action == MotionEvent.ACTION_UP) {
 
                 // Revert translations back to default
-                this.recyclerView.updateForTranslation(viewHolder, 0f)
+                this.recyclerView.updateForTranslation(recyclerView.context, position, 0f)
 
                 // Remove onTouchListeners
                 recyclerView.setOnTouchListener { _, _ -> false }
