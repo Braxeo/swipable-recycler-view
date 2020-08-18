@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.LinearLayout
+import androidx.core.view.children
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.xwray.groupie.kotlinandroidextensions.Item
 import com.xwray.groupie.kotlinandroidextensions.ViewHolder
@@ -237,7 +238,6 @@ abstract class SwipeItem: Item() {
      * Performs standard binding for all views
      */
     override fun bind(viewHolder: ViewHolder, position: Int) {
-
         val inflater = LayoutInflater.from(viewHolder.itemView.context)
 
         // Check if we have a containerView
@@ -281,13 +281,13 @@ abstract class SwipeItem: Item() {
             rightView = getRightLayout()?.let { layout -> inflater.inflate(layout, base, false) }
         }
 
-        // Remove old parents
+        // Remove these views from their old parents
         (base?.parent as? ViewGroup)?.removeView(base)
         (centreView?.parent as? LinearLayout)?.removeView(centreView)
         (leftView?.parent as? LinearLayout)?.removeView(leftView)
         (rightView?.parent as? LinearLayout)?.removeView(rightView)
 
-        // Add new parents
+        // Add these views to their new parents
         (containerView as? ViewGroup)?.addView(base)
         base?.centre_base?.addView(centreView)
         leftView?.let { view -> base?.left_base?.addView(view) }
@@ -304,6 +304,38 @@ abstract class SwipeItem: Item() {
         bindRight(rightView, position)
 
         attachLayoutListeners(viewHolder.itemView.context)
+
+        // Removes the old views from these parents
+        removeUnwantedViews(viewHolder)
+    }
+
+    /**
+     * Removes the child views that were pushed in on bind methods
+     * from other viewHolders
+     */
+    private fun removeUnwantedViews(viewHolder: ViewHolder) {
+        // Ensure that it is a ViewGroup
+        if (viewHolder.itemView !is ViewGroup){
+            throw SwipeException("Swipe getContainerLayout() must return a ViewGroup (CardView, LinearLayout, GridLayout)")
+        }
+        // itemView will be either getContainerLayout() or BaseView
+        (viewHolder.itemView as ViewGroup).let { viewGroup ->
+
+            // These views will either be the baseView or left, right, centre bases
+            val baseViews = viewGroup.children.toList()
+            baseViews.forEach { baseView ->
+
+                // These views will either be left, right and centre bases or views
+                val childViews = (baseView as? ViewGroup)?.children?.toList()
+                childViews?.forEach { childView ->
+
+                    if (!listOf(leftView, rightView, centreView, leftBase, rightBase, centreBase).contains(childView)){
+                        // If they aren't for this viewHolder, get rid of them
+                        baseView.removeView(childView)
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -351,8 +383,6 @@ abstract class SwipeItem: Item() {
                 }
             })
     }
-
-
 
     private fun invalidateOptionLengths(context: Context) {
         updateForTranslation(cachedTranslation, context, 250)

@@ -6,7 +6,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
-        android:animateLayoutChanges="true"
         android:id="@+id/left_base"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
@@ -16,7 +15,6 @@
         app:layout_constraintEnd_toStartOf="parent"/>
 
     <LinearLayout
-        android:animateLayoutChanges="true"
         android:id="@+id/right_base"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
@@ -26,7 +24,6 @@
         app:layout_constraintStart_toEndOf="parent"/>
 
     <LinearLayout
-        android:animateLayoutChanges="true"
         android:id="@+id/centre_base"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

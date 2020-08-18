@@ -25,6 +25,9 @@ class SwipeRecyclerView : RecyclerView {
 
         // Attach to recyclerView
         helper.attachToRecyclerView(this)
+
+        // Removes flashy animation when adding/removing views
+        itemAnimator = null
     }
 
     /**
