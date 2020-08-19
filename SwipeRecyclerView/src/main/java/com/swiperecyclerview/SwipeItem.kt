@@ -14,7 +14,15 @@ import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 import kotlinx.android.synthetic.main.item_swipe_base.view.*
 
 /** Created by Brandon Kitt (15/08/2020)  */
-abstract class SwipeItem: Item() {
+abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
+
+    /**
+     * Used to dynamically adjust the translation of the left and right options based on
+     * and changes made during the bind methods
+     *
+     * @see invalidateOptionLengths
+     */
+    private var translation: Float = defaultTranslation ?: 0f
 
     /**
      * Used to check if the centreView can
@@ -115,14 +123,6 @@ abstract class SwipeItem: Item() {
      * @see getContainerLayout
      */
     override fun getLayout(): Int = getContainerLayout() ?: R.layout.item_swipe_base
-
-    /**
-     * Used to dynamically adjust the translation of the left and right options based on
-     * and changes made during the bind methods
-     *
-     * @see invalidateOptionLengths
-     */
-    private var cachedTranslation: Float = 0f
 
     /**
      * Used to surround the baseView, centreView, leftView and rightView
@@ -358,16 +358,16 @@ abstract class SwipeItem: Item() {
                     val modified = when {
 
                         // This view is showing the leftView
-                        cachedTranslation > 0 -> {
+                        translation > 0 -> {
                             // Update to new leftView length
-                            cachedTranslation = getLeftLength(context).toFloat()
+                            translation = getLeftLength(context).toFloat()
                             true
                         }
 
                         // This view is showing the rightView
-                        cachedTranslation < 0 -> {
+                        translation < 0 -> {
                             // Update to new rightView length
-                            cachedTranslation = -getRightLength(context).toFloat()
+                            translation = -getRightLength(context).toFloat()
                             true
                         }
 
@@ -385,7 +385,7 @@ abstract class SwipeItem: Item() {
     }
 
     private fun invalidateOptionLengths(context: Context) {
-        updateForTranslation(cachedTranslation, context, 250)
+        updateForTranslation(translation, context, 250)
     }
 
     /**
@@ -402,13 +402,13 @@ abstract class SwipeItem: Item() {
      * @param context Used to calculate the closest options width for
      * validation
      */
-    internal fun updateForTranslation(translation: Float, context: Context, translationDuration: Long = 0) {
+    internal fun updateForTranslation(xTranslation: Float, context: Context, translationDuration: Long = 0) {
 
         // Store translation so we can dynamically translate based on left/right view bind() changes
-        cachedTranslation = translation
+        translation = xTranslation
 
-        if (invalidSwipeDirection(translation) ||
-            invalidSwipeOverdraw(translation, context))
+        if (invalidSwipeDirection() ||
+            invalidSwipeOverdraw(context))
         {
             // Leave early if we have an invalid translation
             return
@@ -424,8 +424,8 @@ abstract class SwipeItem: Item() {
 
         // Animate the left, right or both views based on translation
         when {
-            translation > 0 -> adjustPositionForLeftView(translation)
-            translation < 0 -> adjustPositionForRightView(translation)
+            translation > 0 -> adjustPositionForLeftView()
+            translation < 0 -> adjustPositionForRightView()
             translation == 0f -> moveOptionsOutOfView()
         }
     }
@@ -436,10 +436,7 @@ abstract class SwipeItem: Item() {
      * @see canOverdraw
      * @return True if the translation is invalid, otherwise false
      */
-    private fun invalidSwipeOverdraw(
-        translation: Float,
-        context: Context
-    ): Boolean {
+    private fun invalidSwipeOverdraw(context: Context): Boolean {
         return when {
             translation > 0 -> !canOverdraw() && translation > getLeftLength(context)
             translation < 0 -> !canOverdraw() && -translation > getRightLength(context)
@@ -453,10 +450,10 @@ abstract class SwipeItem: Item() {
      * @see getSwipeDirs
      * @return True if the translation is invalid, otherwise false
      */
-    private fun invalidSwipeDirection(x: Float): Boolean {
+    private fun invalidSwipeDirection(): Boolean {
         return when {
-            x > 0 -> swipeDirs and ItemTouchHelper.LEFT == 0
-            x < 0 -> swipeDirs and ItemTouchHelper.RIGHT == 0
+            translation > 0 -> swipeDirs and ItemTouchHelper.LEFT == 0
+            translation < 0 -> swipeDirs and ItemTouchHelper.RIGHT == 0
             else -> false
         }
     }
@@ -465,14 +462,14 @@ abstract class SwipeItem: Item() {
      * Sets both leftView and rightView back to the default position (hidden)
      */
     private fun moveOptionsOutOfView() {
-        adjustPositionForLeftView(0f)
-        adjustPositionForRightView(0f)
+        adjustPositionForLeftView()
+        adjustPositionForRightView()
     }
 
     /**
      * Adjusts the position of the leftView based on the given translation
      */
-    private fun adjustPositionForLeftView(translation: Float, translationDuration: Long = 0) {
+    private fun adjustPositionForLeftView(translationDuration: Long = 0) {
         leftBase?.let { view ->
             // Only move the leftView as far as its own width
             translation.coerceAtMost(view.width.toFloat()).let { calculatedMaximumTranslation ->
@@ -491,7 +488,7 @@ abstract class SwipeItem: Item() {
     /**
      * Adjusts the position of the rightView based on the given translation
      */
-    private fun adjustPositionForRightView(translation: Float, translationDuration: Long = 0) {
+    private fun adjustPositionForRightView(translationDuration: Long = 0) {
         rightBase?.let { view ->
             // Only move the rightView as far as its own width
             translation.coerceAtLeast(-(view.width.toFloat())).let { calculatedMinimumTranslation ->

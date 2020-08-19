@@ -12,7 +12,7 @@ class EmployeeSwipeInCardView(
     var name: String,
     var color: Int,
     private val actionListener: ActionListener?
-): SwipeItem() {
+): SwipeItem(100f) {
 
     var showRename = true
     var showRecolor = true

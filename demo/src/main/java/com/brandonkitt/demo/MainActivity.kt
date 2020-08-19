@@ -22,7 +22,7 @@ class MainActivity : AppCompatActivity() {
         noSwipeSection = Section()
         swipeSection = Section()
         cardSection = Section()
-        section.addAll(listOf(noSwipeSection, cardSection, swipeSection))
+        section.addAll(listOf(cardSection, noSwipeSection, swipeSection))
 
         val noSwipeItems = mutableListOf(
             EmployeeNoSwipe(
