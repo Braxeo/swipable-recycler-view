@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.LinearLayout
-import androidx.core.view.children
 import androidx.recyclerview.widget.ItemTouchHelper
 import com.xwray.groupie.kotlinandroidextensions.Item
 import com.xwray.groupie.kotlinandroidextensions.ViewHolder
@@ -287,6 +286,9 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
         (leftView?.parent as? LinearLayout)?.removeView(leftView)
         (rightView?.parent as? LinearLayout)?.removeView(rightView)
 
+        // Removes the old views from the viewHolder
+        (viewHolder.itemView as ViewGroup).removeAllViews()
+
         // Add these views to their new parents
         (containerView as? ViewGroup)?.addView(base)
         base?.centre_base?.addView(centreView)
@@ -304,38 +306,6 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
         bindRight(rightView, position)
 
         attachLayoutListeners(viewHolder.itemView.context)
-
-        // Removes the old views from these parents
-        removeUnwantedViews(viewHolder)
-    }
-
-    /**
-     * Removes the child views that were pushed in on bind methods
-     * from other viewHolders
-     */
-    private fun removeUnwantedViews(viewHolder: ViewHolder) {
-        // Ensure that it is a ViewGroup
-        if (viewHolder.itemView !is ViewGroup){
-            throw SwipeException("Swipe getContainerLayout() must return a ViewGroup (CardView, LinearLayout, GridLayout)")
-        }
-        // itemView will be either getContainerLayout() or BaseView
-        (viewHolder.itemView as ViewGroup).let { viewGroup ->
-
-            // These views will either be the baseView or left, right, centre bases
-            val baseViews = viewGroup.children.toList()
-            baseViews.forEach { baseView ->
-
-                // These views will either be left, right and centre bases or views
-                val childViews = (baseView as? ViewGroup)?.children?.toList()
-                childViews?.forEach { childView ->
-
-                    if (!listOf(leftView, rightView, centreView, leftBase, rightBase, centreBase).contains(childView)){
-                        // If they aren't for this viewHolder, get rid of them
-                        baseView.removeView(childView)
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -398,7 +368,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * @see getSwipeDirs
      * @see canOverdraw
      *
-     * @param translation The amount the centreView has been translated
+     * @param xTranslation The amount the centreView has been translated
      * @param context Used to calculate the closest options width for
      * validation
      */
