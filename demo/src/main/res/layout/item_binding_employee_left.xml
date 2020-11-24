@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <import type="android.view.View.OnClickListener"/>
+
+        <variable name="renameOnClick" type="OnClickListener" />
+        <variable name="backgroundOnClick" type="OnClickListener" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:background="@android:color/holo_green_light"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/rename_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rename"
+            android:onClick="@{renameOnClick}"
+            tools:ignore="HardcodedText"
+            android:layout_margin="8dp"
+            app:drawableTint="@android:color/white"
+            android:textColor="@android:color/white"
+            app:drawableTopCompat="@drawable/ic_baseline_featured_play_list_24"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/background_textView"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/background_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Recolor"
+            tools:ignore="HardcodedText"
+            android:onClick="@{backgroundOnClick}"
+            android:layout_margin="8dp"
+            app:drawableTint="@android:color/white"
+            android:textColor="@android:color/white"
+            app:drawableTopCompat="@drawable/ic_baseline_color_lens_24"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/rename_textView" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

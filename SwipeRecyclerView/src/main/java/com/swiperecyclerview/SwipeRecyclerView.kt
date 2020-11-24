@@ -5,6 +5,8 @@ import android.util.AttributeSet
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.xwray.groupie.GroupAdapter
+import com.xwray.groupie.ViewHolder
+import java.lang.reflect.Type
 
 /** Created by Brandon Kitt (15/08/2020)  */
 class SwipeRecyclerView : RecyclerView {
@@ -28,6 +30,24 @@ class SwipeRecyclerView : RecyclerView {
 
         // Removes flashy animation when adding/removing views
         itemAnimator = null
+    }
+
+    @JvmName(name = "setSwipeAdapter")
+    fun setAdapter(adapter: Adapter<com.xwray.groupie.ViewHolder>?){
+        super.setAdapter(adapter)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    @Deprecated(
+        level = DeprecationLevel.ERROR,
+        message = "Specific ViewHolder type required, use setAdapter(adapter: Adapter<com.xwray.groupie.ViewHolder>)",
+        replaceWith = ReplaceWith(
+            "setAdapter(adapter as Adapter<com.xwray.groupie.ViewHolder>)",
+            "androidx.recyclerview.widget.RecyclerView.Adapter"
+        )
+    )
+    override fun setAdapter(adapter: Adapter<*>?) {
+        setAdapter(adapter as Adapter<com.xwray.groupie.ViewHolder>)
     }
 
     /**

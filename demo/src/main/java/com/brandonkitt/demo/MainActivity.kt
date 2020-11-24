@@ -2,16 +2,16 @@ package com.brandonkitt.demo
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.xwray.groupie.GroupAdapter
 import com.xwray.groupie.Section
-import com.xwray.groupie.kotlinandroidextensions.ViewHolder
+import com.xwray.groupie.ViewHolder
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var noSwipeSection: Section
     private lateinit var swipeSection: Section
+    private lateinit var bindableSwipeSection: Section
     private lateinit var cardSection: Section
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,8 +21,9 @@ class MainActivity : AppCompatActivity() {
         val section = Section()
         noSwipeSection = Section()
         swipeSection = Section()
+        bindableSwipeSection = Section()
         cardSection = Section()
-        section.addAll(listOf(cardSection, noSwipeSection, swipeSection))
+        section.addAll(listOf(cardSection, noSwipeSection, swipeSection, bindableSwipeSection))
 
         val noSwipeItems = mutableListOf(
             EmployeeNoSwipe(
@@ -71,6 +72,29 @@ class MainActivity : AppCompatActivity() {
                 name = "Tim",
                 color = android.R.color.holo_orange_light,
                 actionListener = swipeActionListener
+            )
+        )
+
+        val bindableSwipeItems = mutableListOf(
+            EmployeeDataBindingSwipe(
+                name = "Tim",
+                color = android.R.color.holo_orange_light,
+                actionListener = bindableSwipeActionListener
+            ),
+            EmployeeDataBindingSwipe(
+                name = "Tim",
+                color = android.R.color.holo_orange_light,
+                actionListener = bindableSwipeActionListener
+            ),
+            EmployeeDataBindingSwipe(
+                name = "Tim",
+                color = android.R.color.holo_orange_light,
+                actionListener = bindableSwipeActionListener
+            ),
+            EmployeeDataBindingSwipe(
+                name = "Tim",
+                color = android.R.color.holo_orange_light,
+                actionListener = bindableSwipeActionListener
             )
         )
 
@@ -124,12 +148,10 @@ class MainActivity : AppCompatActivity() {
 
         noSwipeSection.addAll(noSwipeItems)
         swipeSection.addAll(swipeItems)
+        bindableSwipeSection.addAll(bindableSwipeItems)
         cardSection.addAll(cardItems)
 
-        swipe_recycler_view.layoutManager = LinearLayoutManager(this)
-        swipe_recycler_view.adapter = GroupAdapter<ViewHolder>().apply {
-            add(section)
-        }
+        swipe_recycler_view.setAdapter(GroupAdapter<ViewHolder>().apply { add(section) })
     }
 
     private val swipeActionListener = object : EmployeeSwipe.ActionListener {
@@ -145,6 +167,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onBackgroundClicked(item: EmployeeSwipe) {
+            item.color = Helper.getNextColor(item.color)
+            item.notifyChanged("Color")
+        }
+    }
+
+    private val bindableSwipeActionListener = object : EmployeeDataBindingSwipe.ActionListener {
+        override fun onDeleteClicked(item: EmployeeDataBindingSwipe) {
+            swipeSection.remove(item)
+        }
+
+        override fun onRenameClicked(item: EmployeeDataBindingSwipe) {
+            Helper.getTextInput(this@MainActivity, "Rename ${item.name}"){ newName ->
+                item.name = newName
+                item.notifyChanged("Name")
+            }
+        }
+
+        override fun onBackgroundClicked(item: EmployeeDataBindingSwipe) {
             item.color = Helper.getNextColor(item.color)
             item.notifyChanged("Color")
         }

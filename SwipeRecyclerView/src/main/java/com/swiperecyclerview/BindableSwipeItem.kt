@@ -7,15 +7,22 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.LinearLayout
+import androidx.databinding.DataBindingUtil
+import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.ItemTouchHelper
-import com.xwray.groupie.kotlinandroidextensions.Item
-import com.xwray.groupie.kotlinandroidextensions.ViewHolder
+import com.swiperecyclerview.databinding.ItemSwipeBaseBinding
+import com.xwray.groupie.databinding.BindableItem
 import kotlinx.android.synthetic.main.item_swipe_base.view.*
 
 /** Created by Brandon Kitt (15/08/2020)  */
-abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
+abstract class BindableSwipeItem<
+        LeftLayoutBinding: ViewDataBinding,
+        CentreLayoutBinding: ViewDataBinding,
+        RightLayoutBinding: ViewDataBinding>(
+    defaultTranslation: Float? = null
+): BindableItem<ViewDataBinding>() {
 
-    override fun isSameAs(other: com.xwray.groupie.Item<*>?): Boolean = other is SwipeItem
+    override fun isSameAs(other: com.xwray.groupie.Item<*>?): Boolean = other is BindableSwipeItem<*,*,*>
 
     /**
      * Used to dynamically adjust the translation of the left and right options based on
@@ -74,19 +81,25 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * Used to update a payload from leftLayout
      * This is only called when a payload is used in notifyChanged(payload: MutableList<Any>)
      */
-    open fun bindLeft(leftView: View?, position: Int, payloads: MutableList<Any>) { bindLeft(leftView, position) }
+    open fun bindLeft(leftView: LeftLayoutBinding?, position: Int, payloads: MutableList<Any>) {
+        bindLeft(leftView, position)
+    }
 
     /**
      * Used to update a payload from rightLayout
      * This is only called when a payload is used in notifyChanged(payload: MutableList<Any>)
      */
-    open fun bindRight(rightView: View?, position: Int, payloads: MutableList<Any>) { bindRight(rightView, position) }
+    open fun bindRight(rightView: RightLayoutBinding?, position: Int, payloads: MutableList<Any>) {
+        bindRight(rightView, position)
+    }
 
     /**
      * Used to update a payload from centreLayout
      * This is only called when a payload is used in notifyChanged(payload: MutableList<Any>)
      */
-    open fun bindCentre(centreView: View, position: Int, payloads: MutableList<Any>) { bindCentre(centreView, position) }
+    open fun bindCentre(centreView: CentreLayoutBinding, position: Int, payloads: MutableList<Any>) {
+        bindCentre(centreView, position)
+    }
 
     /**
      * Used to update the all the views on the leftLayout
@@ -95,7 +108,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * @see leftView
      * @see bindLeft
      */
-    abstract fun bindLeft(leftView: View?, position: Int)
+    abstract fun bindLeft(leftView: LeftLayoutBinding?, position: Int)
 
     /**
      * Used to update the all the views on the rightLayout
@@ -104,7 +117,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * @see rightView
      * @see bindRight
      */
-    abstract fun bindRight(rightView: View?, position: Int)
+    abstract fun bindRight(rightView: RightLayoutBinding?, position: Int)
 
     /**
      * Used to update the all the views on the centreLayout
@@ -113,7 +126,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * @see centreView
      * @see bindCentre
      */
-    abstract fun bindCentre(centreView: View, position: Int)
+    abstract fun bindCentre(centreView: CentreLayoutBinding, position: Int)
 
     /**
      * Gets the base layout for this viewHolder
@@ -132,7 +145,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      *
      * @see getContainerLayout
      */
-    private var containerView: View? = null
+    private var containerView: ViewDataBinding? = null
 
     /**
      * Used on the left side of the centreView
@@ -146,7 +159,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * @see getSwipeDirs
      * @see centreView
      */
-    private var leftView: View? = null
+    private var leftView: LeftLayoutBinding? = null
 
     /**
      * Used on the right side of the centreView
@@ -160,7 +173,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * @see getSwipeDirs
      * @see centreView
      */
-    private var rightView: View? = null
+    private var rightView: RightLayoutBinding? = null
 
     /**
      * Used as the centreView between leftView and rightView
@@ -169,7 +182,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * @see leftView
      * @see rightView
      */
-    private var centreView: View? = null
+    private var centreView: CentreLayoutBinding? = null
 
     /**
      * The base view used to contain the left, centre and right views
@@ -180,7 +193,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * @see centreView
      * @see rightView
      */
-    private var base: ViewGroup? = null
+    private var base: ViewDataBinding? = null
 
     /**
      * Used to hold and translate the leftView
@@ -213,7 +226,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      *  This is done so if the user hides or shows any views the
      *  translations adjust accordingly
      */
-    private fun attachLayoutListeners(context: Context){
+    private fun attachLayoutListeners(context: Context) {
         attachGlobalLayoutListenerForPostUpdating(rightBase, context)
         attachGlobalLayoutListenerForPostUpdating(leftBase, context)
     }
@@ -222,13 +235,14 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * Performs payload binding for all views if a payload
      * is specified, otherwise defaults to standard binding for all views
      */
-    override fun bind(viewHolder: ViewHolder, position: Int, payloads: MutableList<Any>) {
-        if (payloads.isNotEmpty()){
+
+    override fun bind(viewHolder: ViewDataBinding, position: Int, payloads: MutableList<Any>) {
+        if (payloads.isNotEmpty()) {
             // Perform payload bind for all views
             bindLeft(leftView, position, payloads)
             centreView?.let { bindCentre(it, position, payloads) }
             bindRight(rightView, position, payloads)
-            attachLayoutListeners(viewHolder.itemView.context)
+            attachLayoutListeners(viewHolder.root.context)
         } else {
             // Perform standard bind for all views
             bind(viewHolder, position)
@@ -238,76 +252,85 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
     /**
      * Performs standard binding for all views
      */
-    override fun bind(viewHolder: ViewHolder, position: Int) {
-        val inflater = LayoutInflater.from(viewHolder.itemView.context)
+    override fun bind(viewHolder: ViewDataBinding, position: Int) {
+        val inflater = LayoutInflater.from(viewHolder.root.context)
 
         // Check if we have a containerView
-        if (getContainerLayout() != null){
+        if (getContainerLayout() != null) {
 
             // Ensure that it is a ViewGroup
-            if (viewHolder.itemView !is ViewGroup){
+            if (viewHolder.root !is ViewGroup) {
                 throw SwipeException("getContainerLayout() must return a ViewGroup (CardView, LinearLayout, GridLayout)")
             }
 
             /** Set our viewHolder itemView to containerView
              * @see getLayout
              */
-            containerView = viewHolder.itemView
+            containerView = viewHolder
         }
 
         // Only inflate if null
-        if (base == null){
+        if (base == null) {
 
-            base = if (getContainerLayout() == null){
+            base = if (getContainerLayout() == null) {
                 // ItemView if we don't have a containerView
-                viewHolder.itemView as ViewGroup
+                viewHolder
             } else {
                 // Inflate the base as the containerView is itemView
-                inflater.inflate(
-                    R.layout.item_swipe_base,
-                    viewHolder.itemView as ViewGroup,
-                    false
-                ) as ViewGroup
+                ItemSwipeBaseBinding.inflate(inflater)
             }
         }
 
         // Only inflate if null, as we remove and add views later
-        if (centreView == null){
-            centreView = inflater.inflate(getCentreLayout(), base, false)
+        if (centreView == null) {
+            val view = inflater.inflate(getCentreLayout(), base?.root as ViewGroup, false)
+            // This is separated so we can throw IllegalArgumentException if the getCentreLayout() view is not a binding view
+            // instead of covering the real issue with a "centreView was null" NPE
+            centreView = DataBindingUtil.bind(view)
         }
-        if (leftView == null && getLeftLayout() != null){
-            leftView = getLeftLayout()?.let {  layout -> inflater.inflate(layout, base, false) }
+        if (leftView == null && getLeftLayout() != null) {
+            leftView = getLeftLayout()?.let {
+                val view = inflater.inflate(it, base?.root as ViewGroup, false)
+                // This is separated so we can throw IllegalArgumentException if the getLeftLayout() view is not a binding view
+                // instead of just not including the view
+                DataBindingUtil.bind(view)
+            }
         }
-        if (rightView == null && getRightLayout() != null){
-            rightView = getRightLayout()?.let { layout -> inflater.inflate(layout, base, false) }
+        if (rightView == null && getRightLayout() != null) {
+            rightView = getRightLayout()?.let {
+                val view = inflater.inflate(it, base?.root as ViewGroup, false)
+                // This is separated so we can throw IllegalArgumentException if the getRightLayout() view is not a binding view
+                // instead of just not including the view
+                DataBindingUtil.bind(view)
+            }
         }
 
         // Remove these views from their old parents
-        (base?.parent as? ViewGroup)?.removeView(base)
-        (centreView?.parent as? LinearLayout)?.removeView(centreView)
-        (leftView?.parent as? LinearLayout)?.removeView(leftView)
-        (rightView?.parent as? LinearLayout)?.removeView(rightView)
+        (base?.root?.parent as? ViewGroup)?.removeView(base?.root)
+        (centreView?.root?.parent as? LinearLayout)?.removeView(centreView?.root)
+        (leftView?.root?.parent as? LinearLayout)?.removeView(leftView?.root)
+        (rightView?.root?.parent as? LinearLayout)?.removeView(rightView?.root)
 
         // Removes the old views from the viewHolder
-        (viewHolder.itemView as ViewGroup).removeAllViews()
+        (viewHolder.root as ViewGroup).removeAllViews()
 
         // Add these views to their new parents
-        (containerView as? ViewGroup)?.addView(base)
-        base?.centre_base?.addView(centreView)
-        leftView?.let { view -> base?.left_base?.addView(view) }
-        rightView?.let { view -> base?.right_base?.addView(view) }
+        base?.let { (containerView?.root as? ViewGroup)?.addView(it.root) }
+        centreView?.root?.let { base?.root?.centre_base?.addView(it) }
+        leftView?.root?.let { view -> base?.root?.left_base?.addView(view) }
+        rightView?.root?.let { view -> base?.root?.right_base?.addView(view) }
 
         // Add references to bases for translation
-        leftBase = base?.left_base
-        centreBase = base?.centre_base
-        rightBase = base?.right_base
+        leftBase = base?.root?.left_base
+        centreBase = base?.root?.centre_base
+        rightBase = base?.root?.right_base
 
         // Call bind methods for all views
         bindLeft(leftView, position)
         bindCentre(requireNotNull(centreView), position)
         bindRight(rightView, position)
 
-        attachLayoutListeners(viewHolder.itemView.context)
+        attachLayoutListeners(viewHolder.root.context)
     }
 
     /**
@@ -320,7 +343,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * for all viewHolders currently visible, we would only want the one that
      * has been modified to update
      */
-    private fun attachGlobalLayoutListenerForPostUpdating(view: View?, context: Context){
+    private fun attachGlobalLayoutListenerForPostUpdating(view: View?, context: Context) {
         view?.viewTreeObserver
             ?.takeIf { it.isAlive }
             ?.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
@@ -347,7 +370,7 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
                         else -> false
                     }
 
-                    if (modified){
+                    if (modified) {
                         invalidateOptionLengths(context)
                     }
 
@@ -374,14 +397,18 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * @param context Used to calculate the closest options width for
      * validation
      */
-    internal fun updateForTranslation(xTranslation: Float, context: Context, translationDuration: Long = 0) {
+    internal fun updateForTranslation(
+        xTranslation: Float,
+        context: Context,
+        translationDuration: Long = 0
+    ) {
 
         // Store translation so we can dynamically translate based on left/right view bind() changes
         translation = xTranslation
 
         if (invalidSwipeDirection() ||
-            invalidSwipeOverdraw(context))
-        {
+            invalidSwipeOverdraw(context)
+        ) {
             // Leave early if we have an invalid translation
             return
         }
@@ -480,25 +507,23 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
      * Gets the calculated length of the leftView
      */
     internal fun getLeftLength(context: Context): Int {
-        return leftBase?.width ?:
-               getLeftLayout()?.let {
-                   LayoutInflater
-                       .from(context)
-                       .inflate(it, null, false)
-                       .width
-               } ?: 0
+        return leftBase?.width ?: getLeftLayout()?.let {
+            LayoutInflater
+                .from(context)
+                .inflate(it, null, false)
+                .width
+        } ?: 0
     }
 
     /**
      * Gets the calculated length of the rightView
      */
     internal fun getRightLength(context: Context): Int {
-        return rightBase?.width ?:
-               getRightLayout()?.let {
-                   LayoutInflater
-                       .from(context)
-                       .inflate(it, null, false)
-                       .width
-               } ?: 0
+        return rightBase?.width ?: getRightLayout()?.let {
+            LayoutInflater
+                .from(context)
+                .inflate(it, null, false)
+                .width
+        } ?: 0
     }
 }
