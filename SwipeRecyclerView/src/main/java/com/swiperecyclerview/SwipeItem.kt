@@ -205,6 +205,22 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
     private var centreBase: View? = null
 
     /**
+     * Resets the translation to zero and moves the options
+     * out of view, this essentially is "resetting" the view
+     */
+    fun resetTranslation(){
+        // Reset translation to 0 so calculated translations are
+        // going back to the default position
+        translation = 0f
+
+        // Adjust the centre view
+        adjustPositionForCentreView()
+
+        // Adjust the left and right views
+        moveOptionsOutOfView()
+    }
+
+    /**
      *  Used to attach a layout listener to the left and right
      *  views
      *
@@ -384,13 +400,8 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
             return
         }
 
-        // Animate the centreView by translation
-        centreView?.let { view ->
-            ObjectAnimator.ofFloat(view, "translationX", translation).apply {
-                duration = translationDuration
-                start()
-            }
-        }
+        // Animate the centreView based on translation
+        adjustPositionForCentreView()
 
         // Animate the left, right or both views based on translation
         when {
@@ -434,6 +445,15 @@ abstract class SwipeItem(defaultTranslation: Float? = null) : Item() {
     private fun moveOptionsOutOfView() {
         adjustPositionForLeftView()
         adjustPositionForRightView()
+    }
+
+    private fun adjustPositionForCentreView(translationDuration: Long = 0){
+        centreView?.let { view ->
+            ObjectAnimator.ofFloat(view, "translationX", translation).apply {
+                duration = translationDuration
+                start()
+            }
+        }
     }
 
     /**

@@ -12,6 +12,10 @@ import com.swiperecyclerview.SwipeController.OptionState.*
 @SuppressLint("ClickableViewAccessibility")
 class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHelper.Callback() {
 
+
+    val x: ItemTouchHelper.SimpleCallback {}
+
+
     enum class OptionState {
         GONE,
         LEFT_VISIBLE,
@@ -31,7 +35,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
         viewHolder: RecyclerView.ViewHolder
     ): Int {
         // We want both left and right callbacks, no drag callbacks
-        return makeMovementFlags(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT)
+        return makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT)
     }
 
     /**
@@ -43,6 +47,10 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
         target: RecyclerView.ViewHolder
     ): Boolean {
         return false
+    }
+
+    override fun onMoved(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, fromPos: Int, target: RecyclerView.ViewHolder, toPos: Int, x: Int, y: Int) {
+        super.onMoved(recyclerView, viewHolder, fromPos, target, toPos, x, y)
     }
 
     /**
