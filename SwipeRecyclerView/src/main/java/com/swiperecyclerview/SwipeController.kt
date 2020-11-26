@@ -12,10 +12,6 @@ import com.swiperecyclerview.SwipeController.OptionState.*
 @SuppressLint("ClickableViewAccessibility")
 class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHelper.Callback() {
 
-
-    val x: ItemTouchHelper.SimpleCallback {}
-
-
     enum class OptionState {
         GONE,
         LEFT_VISIBLE,
@@ -39,24 +35,16 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
     }
 
     /**
-     * This is removed as we aren't handling reordering
+     * Handled through the SwipeRecyclerView with adapterDataObserver,
+     * so no need to monitor
      */
-    override fun onMove(
-        recyclerView: RecyclerView,
-        viewHolder: RecyclerView.ViewHolder,
-        target: RecyclerView.ViewHolder
-    ): Boolean {
-        return false
-    }
-
-    override fun onMoved(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, fromPos: Int, target: RecyclerView.ViewHolder, toPos: Int, x: Int, y: Int) {
-        super.onMoved(recyclerView, viewHolder, fromPos, target, toPos, x, y)
-    }
+    override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean = false
 
     /**
-     * TODO - Should this be blank? Should we overwirse this?
+     * Handled through the SwipeRecyclerView with adapterDataObserver,
+     * so no need to monitor
      */
-    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) = Unit
 
     override fun onChildDraw(
         c: Canvas,

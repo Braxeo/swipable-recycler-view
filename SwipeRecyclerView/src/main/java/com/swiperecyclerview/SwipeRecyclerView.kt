@@ -16,10 +16,10 @@ class SwipeRecyclerView : RecyclerView {
     constructor(context: Context, attributeSet: AttributeSet): super(context, attributeSet)
     constructor(context: Context, attributeSet: AttributeSet, defStyleAttr: Int): super(context, attributeSet, defStyleAttr)
 
-    init {
-        // Create our own swipe controller
-        val controller = SwipeController(this)
+    // Create our own swipe controller
+    private var controller: SwipeController = SwipeController(this)
 
+    init {
         // Attach to ItemTouchHelper for touch listening
         val helper = ItemTouchHelper(controller)
 
@@ -28,6 +28,19 @@ class SwipeRecyclerView : RecyclerView {
 
         // Removes flashy animation when adding/removing views
         itemAnimator = null
+    }
+
+    override fun setAdapter(newAdapter: Adapter<*>?) {
+        adapter?.unregisterAdapterDataObserver(dragObserver)
+        super.setAdapter(newAdapter)
+        newAdapter?.registerAdapterDataObserver(dragObserver)
+    }
+
+    private val dragObserver = object : AdapterDataObserver() {
+        override fun onItemRangeMoved(fromPosition: Int, toPosition: Int, itemCount: Int) {
+            val from = findViewHolderForAdapterPosition(fromPosition) ?: return
+            val to = findViewHolderForAdapterPosition(toPosition) ?: return
+        }
     }
 
     /**
