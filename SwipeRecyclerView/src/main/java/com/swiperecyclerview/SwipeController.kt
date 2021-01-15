@@ -60,11 +60,9 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
         isCurrentlyActive: Boolean
     ) {
 
-        // Store the viewHolder position, we use this to reference
-        // the correct adapter item later, not viewHolder.adapterPosition as
-        // this gets outdated throughout the onTouchListeners
-        // resulting in -1
-        val position = viewHolder.adapterPosition
+        // We now use the viewHolder to reference the item, as
+        // viewHolder.adapterPosition can be outdated
+
         val context= viewHolder.itemView.context
         var x = dX
 
@@ -82,23 +80,23 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
                     else -> Unit
                 }
 
-                this.recyclerView.updateForTranslation(context, position, x)
+                this.recyclerView.updateForTranslation(context, viewHolder, x)
             }
             else {
-                setTouchListener(recyclerView, position, x)
+                setTouchListener(recyclerView, viewHolder, x)
             }
         }
 
         // Make sure that if we are not longer showing anything we still want to update
         // in-case we previously were showing an option
         if (buttonShowedState == GONE) {
-            this.recyclerView.updateForTranslation(context, position, x)
+            this.recyclerView.updateForTranslation(context, viewHolder, x)
         }
     }
 
     private fun setTouchListener(
         recyclerView: RecyclerView,
-        position: Int,
+        viewHolder: RecyclerView.ViewHolder,
         dX: Float
     ) {
         recyclerView.setOnTouchListener { _, motionEvent ->
@@ -110,7 +108,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
 
                 // Get width based on current translation,
                 // as we don't have an option to choose from yet
-                val width = this.recyclerView.widthFromCentreTranslation(position, dX)
+                val width = this.recyclerView.widthFromCentreTranslation(viewHolder, dX)
 
                 when {
                     (-dX > width && dX < 0) -> buttonShowedState = RIGHT_VISIBLE
@@ -119,7 +117,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
 
                 // Update if we're past a button threshold
                 if (buttonShowedState != GONE) {
-                    setTouchDownListener(recyclerView, position)
+                    setTouchDownListener(recyclerView, viewHolder)
                 }
             }
 
@@ -129,13 +127,13 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
 
     private fun setTouchDownListener(
         recyclerView: RecyclerView,
-        position: Int
+        viewHolder: RecyclerView.ViewHolder
     ) {
         recyclerView.setOnTouchListener { _, event ->
             // Update if action down and move
             // Updated to used ACTION_MOVE to be more reactive and friendly to user-interaction
             if (event.action == MotionEvent.ACTION_DOWN || event.action == MotionEvent.ACTION_MOVE) {
-                setTouchUpListener(recyclerView, position)
+                setTouchUpListener(recyclerView, viewHolder)
             }
             false
         }
@@ -143,7 +141,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
 
     private fun setTouchUpListener(
         recyclerView: RecyclerView,
-        position: Int
+        viewHolder: RecyclerView.ViewHolder
     ) {
         recyclerView.setOnTouchListener { _, event ->
 
@@ -151,7 +149,7 @@ class SwipeController(private val recyclerView: SwipeRecyclerView) : ItemTouchHe
             if (event.action == MotionEvent.ACTION_UP) {
 
                 // Revert translations back to default
-                this.recyclerView.updateForTranslation(recyclerView.context, position, 0f)
+                this.recyclerView.updateForTranslation(recyclerView.context, viewHolder, 0f)
 
                 // Remove onTouchListeners
                 recyclerView.setOnTouchListener { _, _ -> false }

@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.xwray.groupie.GroupAdapter
+import com.xwray.groupie.kotlinandroidextensions.ViewHolder
 
 /** Created by Brandon Kitt (15/08/2020)  */
 class SwipeRecyclerView : RecyclerView {
@@ -34,18 +35,14 @@ class SwipeRecyclerView : RecyclerView {
      * Updates the translation animations on the centre, left and right views
      * for the viewHolder
      */
-    internal fun updateForTranslation(context: Context, position: Int, x: Float) {
-        // Make sure that the adapter isn't in a weird state
-        if (position != -1){
+    internal fun updateForTranslation(context: Context, viewHolder: ViewHolder, x: Float) {
+        // Make sure we're using Groupie
+        val adapter = adapter as? GroupAdapter
 
-            // Make sure we're using Groupie
-            val adapter = adapter as? GroupAdapter
+        // Check that we're using a SwipeItem
+        val swipeItem = adapter?.getItem(viewHolder) as? SwipeItem
 
-            // Check that we're using a SwipeItem
-            val swipeItem = adapter?.getItem(position) as? SwipeItem
-
-            swipeItem?.updateForTranslation(x, context)
-        }
+        swipeItem?.updateForTranslation(x, context)
     }
 
     /**
@@ -61,7 +58,9 @@ class SwipeRecyclerView : RecyclerView {
         val adapter = adapter as? GroupAdapter
 
         // Get SwipeItem
-        val swipeItem = adapter?.getItem(viewHolder.adapterPosition) as? SwipeItem
+        // Use the viewHolder to retrieve the item, as viewHolder.adapterPosition can give us
+        // placeholder items with null values
+        val swipeItem = adapter?.getItem(viewHolder) as? SwipeItem
 
         /**
          * If this isn't a swipe item, handle as we have no option,
@@ -83,20 +82,18 @@ class SwipeRecyclerView : RecyclerView {
      *
      * @return The length of the Left or Right view
      */
-    internal fun widthFromCentreTranslation(position: Int, translation: Float): Int {
+    internal fun widthFromCentreTranslation(viewHolder: ViewHolder, translation: Float): Int {
 
         // Get Groupie Adapter
         val adapter = adapter as? GroupAdapter
 
         // Get SwipeItem
-        return if (position != -1){
-            val swipeItem = adapter?.getItem(position) as? SwipeItem
+        val swipeItem = adapter?.getItem(viewHolder) as? SwipeItem
 
-            // Gets the Length of the closest option based on translation
-            swipeItem?.let { item ->
-                if (translation > 0) item.getLeftLength(context)
-                else item.getRightLength(context)
-            } ?: 0
-        } else 0
+        // Gets the Length of the closest option based on translation
+        return swipeItem?.let { item ->
+            if (translation > 0) item.getLeftLength(context)
+            else item.getRightLength(context)
+        } ?: 0
     }
 }
